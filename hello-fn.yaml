@@ -1,0 +1,10 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+functions:
+  hello-fn:
+    lang: python3-http
+    handler: ./hello-fn
+    image: mubaris2004/hello-fn:latest
+

@@ -1,0 +1,49 @@
+name: Deploy Function
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    # Build Docker Image
+    - name: Build Image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/hello-fn:latest ./app
+
+    # Login DockerHub
+    - name: Login DockerHub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    # Push Image
+    - name: Push Image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/hello-fn:latest
+
+    # Setup Terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    # Setup kubectl
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+
+    # Configure kubeconfig
+    - name: Set kubeconfig
+      run: |
+        echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig
+        export KUBECONFIG=$PWD/kubeconfig
+
+    # Terraform Init
+    - name: Terraform Init
+      run: terraform init
+      working-directory: terraform/
+
+    # Terraform Apply
+    - name: Terraform Apply
+      run: terraform apply -auto-approve -var="image=${{ secrets.DOCKER_USERNAME }}/hello-fn:latest"
+      working-directory: terraform/

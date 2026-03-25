@@ -1,0 +1,26 @@
+name: Destroy Function
+
+on:
+  workflow_dispatch:
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: hashicorp/setup-terraform@v3
+
+    - name: Set kubeconfig
+      run: |
+        echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig
+        export KUBECONFIG=$PWD/kubeconfig
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: terraform/
+
+    - name: Terraform Destroy
+      run: terraform destroy -auto-approve -var="image=dummy"
+      working-directory: terraform/
